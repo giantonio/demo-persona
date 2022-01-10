@@ -18,6 +18,18 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.IndexedColors;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.FillPatternType;
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
+
+import java.io.File;
+import java.io.FileOutputStream;
+
 @RestController
 @RequestMapping(value = "/api/v1")
 public class PersonaController {    
@@ -29,6 +41,102 @@ public class PersonaController {
     public ResponseEntity<List<Persona>>findAll(){
         List<Persona>personas = (List<Persona>) perRepo.findAll();
         return new ResponseEntity<List<Persona>>(personas,HttpStatus.OK);
+    }
+
+    @GetMapping(value = "/ver")
+    public void exportarExcel(){
+        
+        //Creacion
+        XSSFWorkbook workbook;
+        XSSFSheet sheet;
+        
+        List<Persona>listar = (List<Persona>) perRepo.findAll();
+
+        workbook=new XSSFWorkbook();
+        sheet=workbook.createSheet("Alumnos");
+
+        sheet.setColumnWidth(0, 6000);
+        sheet.setColumnWidth(1, 4000);
+
+        Row header = sheet.createRow(1);
+
+        CellStyle headerStyle = workbook.createCellStyle();
+        headerStyle.setFillForegroundColor(IndexedColors.LIGHT_BLUE.getIndex());
+        headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        headerStyle.setAlignment(HorizontalAlignment.CENTER);
+
+        String CAMPOS_CABECERA []={"NOMBRE","APELLIDOS","EDAD","DIRECCION","SALARIO","FECHAINICIO","FECHAFIN"};
+
+        for(int i=0;i<CAMPOS_CABECERA.length;i++){
+            Cell headerCell = header.createCell(i+1);
+            headerCell.setCellValue(CAMPOS_CABECERA[i]);
+            headerCell.setCellStyle(headerStyle);
+        }
+
+        /*Cell headerCell = header.createCell(1);
+        headerCell.setCellValue("Name");
+        headerCell.setCellStyle(headerStyle);
+
+        headerCell = header.createCell(2);
+        headerCell.setCellValue("Age");
+        headerCell.setCellStyle(headerStyle);*/
+
+        int r=2;
+        
+        for(int i=0;i<listar.size();i++){
+
+            Row row = sheet.createRow(r);
+
+            Cell cell = row.createCell(1);
+            cell.setCellValue(listar.get(i).getNombre());
+
+            cell = row.createCell(2);
+            cell.setCellValue(listar.get(i).getApellidos());
+
+            cell = row.createCell(3);
+            cell.setCellValue(listar.get(i).getEdad());
+
+            cell = row.createCell(4);
+            cell.setCellValue(listar.get(i).getDireccion());
+
+            cell = row.createCell(5);
+            cell.setCellValue(listar.get(i).getSalario());
+
+            cell = row.createCell(6);
+            cell.setCellValue(listar.get(i).getFechaInicio());
+            System.out.print("finicio"+listar.get(i).getFechaInicio());
+
+            cell = row.createCell(6);
+            cell.setCellValue(listar.get(i).getFechaFin());
+            //cell.setCellStyle(style);
+            r++;
+
+        }
+
+        /*CellStyle style = workbook.createCellStyle();
+        style.setWrapText(true);       
+
+        Cell cell = row.createCell(0);
+        cell.setCellValue("John Smith");
+        cell.setCellStyle(style);
+
+        cell = row.createCell(1);
+        cell.setCellValue(20);
+        cell.setCellStyle(style);*/
+
+        File currDir = new File(".");
+        String path = currDir.getAbsolutePath();
+        String filelocation  = path.substring(0, path.length()-1)+"temp.xlsx";
+
+        
+        try{
+            FileOutputStream salida= new FileOutputStream(filelocation);
+            workbook.write(salida);
+            workbook.close();
+        }catch(Exception e){
+            System.out.println("Error en el excel " + e.getCause());
+        }                
+
     }
 
     /**
